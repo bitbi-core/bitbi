@@ -1,0 +1,60 @@
+{
+{
+{
+{
+  "name": "private-tools",
+  "name": "private-tools",
+  "name": "private-tools",
+  "name": "private-tools",
+  "version": "1.0.0",
+  "version": "1.0.0",
+  "version": "1.0.0",
+  "version": "1.0.0",
+  "description": "",
+  "description": "",
+  "description": "",
+  "description": "",
+  "main": "index.js",
+  "main": "index.js",
+  "main": "index.js",
+  "main": "index.js",
+  "scripts": {
+  "scripts": {
+  "scripts": {
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  },
+  },
+  },
+  "author": "",
+  "author": "",
+  "author": "",
+  "author": "",
+  "license": "ISC",
+  "license": "ISC",
+  "license": "ISC",
+  "license": "ISC",
+  "dependencies": {
+  "dependencies": {
+  "dependencies": {
+  "dependencies": {
+    "bech32": "^2.0.0",
+    "bech32": "^2.0.0",
+    "bech32": "^2.0.0",
+    "bech32": "^2.0.0",
+    "bs58check": "^3.0.1"
+    "bs58check": "^3.0.1"
+    "bs58check": "^3.0.1"
+    "bs58check": "^3.0.1"
+  }
+  }
+  }
+  }
+}
+}
+}
+}

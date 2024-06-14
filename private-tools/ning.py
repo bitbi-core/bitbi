@@ -1,0 +1,25 @@
+years = 4
+years = 4
+years = 4
+years = 4
+blocks_per_year = 350000
+blocks_per_year = 350000
+blocks_per_year = 350000
+blocks_per_year = 350000
+block_time = 360
+block_time = 360
+block_time = 360
+block_time = 360
+seconds_per_year = 60 * 60 * 24 * 365
+seconds_per_year = 60 * 60 * 24 * 365
+seconds_per_year = 60 * 60 * 24 * 365
+seconds_per_year = 60 * 60 * 24 * 365
+reward_per_block = 10100
+reward_per_block = 10100
+reward_per_block = 10100
+reward_per_block = 10100
+max_supply = reward_per_block * blocks_per_year * years
+max_supply = reward_per_block * blocks_per_year * years
+max_supply = reward_per_block * blocks_per_year * years
+max_supply = reward_per_block * blocks_per_year * years
+print(f"The maximum supply of the coin in {years} years is {max_supply / 1e8} smallest units or {max_supply} coins.")print(f"The maximum supply of the coin in {years} years is {max_supply / 1e8} smallest units or {max_supply} coins.")print(f"The maximum supply of the coin in {years} years is {max_supply / 1e8} smallest units or {max_supply} coins.")print(f"The maximum supply of the coin in {years} years is {max_supply / 1e8} smallest units or {max_supply} coins.")
