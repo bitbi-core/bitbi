@@ -17,6 +17,7 @@ define $(package)_set_vars
 endef
 
 define $(package)_config_cmds
+	mkdir build && cd build && \
 	cmake $($(package)_config_opts) ..
 endef
 
