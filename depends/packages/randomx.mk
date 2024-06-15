@@ -17,6 +17,7 @@ $(package)_config_opts_android = -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cma
 endef
 
 define $(package)_config_cmds
+ 	bash -c "echo cmake $($(package)_config_opts) .."
 	mkdir build && cd build
 	@echo cmake $($(package)_config_opts) ..
 	@echo cmake $($(package)_config_opts_linux) ..
