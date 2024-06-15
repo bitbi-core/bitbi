@@ -17,7 +17,7 @@ define $(package)_set_vars
 endef
 
 define $(package)_config_cmds
-	cmake $($(package)_config_opts) ..
+	cmake -DARCH=native ..
 	
 endef
 
