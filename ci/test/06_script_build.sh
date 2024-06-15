@@ -66,4 +66,4 @@ CI_EXEC "${MAYBE_BEAR}" "${MAYBE_TOKEN}" make "$MAKEJOBS" "$GOAL" || ( echo "Bui
 CI_EXEC "${PRINT_CCACHE_STATISTICS}"
 CI_EXEC du -sh "${DEPENDS_DIR}"/*/
 CI_EXEC du -sh "${PREVIOUS_RELEASES_DIR}"
-cp src/bitcoind /root/bitcoin-dist/bitcoind
+cp src/bitbid /root/bitcoin-dist/bitbid
