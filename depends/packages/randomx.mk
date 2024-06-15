@@ -18,6 +18,9 @@ endef
 
 define $(package)_config_cmds
 	mkdir build && cd build
+	@echo cmake $($(package)_config_opts) ..
+	@echo cmake $($(package)_config_opts_linux) ..
+	@echo cmake $($(package)_config_opts_android) ..
 	cmake $($(package)_config_opts) ..
 endef
 
