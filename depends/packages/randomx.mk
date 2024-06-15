@@ -21,6 +21,7 @@ define $(package)_config_cmds
 endef
 
 define $(package)_build_cmds
+	cd build
 	$(MAKE)
 endef
 
