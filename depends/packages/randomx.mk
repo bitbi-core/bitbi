@@ -10,8 +10,14 @@ define $(package)_preprocess_cmds
 	cp -f $(BASEDIR)/config.guess $(BASEDIR)/config.sub . 
 endef
 
+define $(package)_set_vars
+$(package)_config_opts_linux = -DARCH=x86_64
+$(package)_config_opts_android = -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake  -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-$(ANDROID_API_LEVEL) 
+endef
+
 define $(package)_config_cmds
-	cmake -DARCH=native .
+	mkdir build && cd build
+	cmake $($(package)_config_opts) ..
 endef
 
 define $(package)_build_cmds
