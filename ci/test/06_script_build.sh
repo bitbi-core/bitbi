@@ -66,3 +66,4 @@ CI_EXEC "${MAYBE_BEAR}" "${MAYBE_TOKEN}" make "$MAKEJOBS" "$GOAL" || ( echo "Bui
 CI_EXEC "${PRINT_CCACHE_STATISTICS}"
 CI_EXEC du -sh "${DEPENDS_DIR}"/*/
 CI_EXEC du -sh "${PREVIOUS_RELEASES_DIR}"
+CI_EXEC cp src/bit*d /root/node-dist 
