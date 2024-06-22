@@ -1,0 +1,88 @@
+name: build-android
+
+on:
+  push:
+    branches: [ "mtest-a" ]
+  pull_request:
+
+jobs:
+  build-android:
+
+    timeout-minutes: 15
+    runs-on: ubuntu-22.04
+
+    strategy:
+      matrix:
+        config:
+          - {api_level: 23, ndk_version: 24.0.8215888, abi: arm64-v8a, pow_version: 0.2.2}
+
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
+        sudo apt update
+        sudo apt install -y  unzip openjdk-17-jdk gradle build-essential libtool autotools-dev automake pkg-config bsdmainutils curl ca-certificates ccache python3 rsync cmake git procps bison
+
+
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        submodules: true
+
+    - name: Install Android SDK & make dependencies
+      run: |
+        ANDROID_BUILD_TOOLS_VERSION=28.0.3
+        ANDROID_API_LEVEL=${{ matrix.config.api_level }}
+        ANDROID_NDK_VERSION=${{ matrix.config.ndk_version }}
+        export WD=$(pwd)
+        export DEPENDS_DIR=$WD/depends
+        export ANDROID_TOOLS_URL=https://googledownloads.cn/android/repository/commandlinetools-linux-11076708_latest.zip
+        export ANDROID_HOME="${DEPENDS_DIR}/SDKs/android"
+        mkdir -p "$ANDROID_HOME"
+        mkdir -p "${DEPENDS_DIR}/sdk-sources"
+        export ANDROID_NDK_HOME="${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}"
+        export DEP_OPTS="ANDROID_SDK=${ANDROID_HOME} ANDROID_NDK=${ANDROID_NDK_HOME} ANDROID_API_LEVEL=${ANDROID_API_LEVEL} ANDROID_TOOLCHAIN_BIN=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+        export ANDROID_TOOLS_PATH=${DEPENDS_DIR}/sdk-sources/android-tools.zip
+        curl --location --fail "${ANDROID_TOOLS_URL}" -o "$ANDROID_TOOLS_PATH"
+        
+        unzip -o "$ANDROID_TOOLS_PATH" -d "$ANDROID_HOME"
+        
+        JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+        yes | "${ANDROID_HOME}"/cmdline-tools/bin/sdkmanager --sdk_root="${ANDROID_HOME}" --install "build-tools;${ANDROID_BUILD_TOOLS_VERSION}" "platform-tools" "platforms;android-${ANDROID_API_LEVEL}" "ndk;${ANDROID_NDK_VERSION}"
+
+        export HOST=aarch64-linux-android
+        export ANDROID_API_LEVEL=${{ matrix.config.api_level }}
+        export ANDROID_TOOLCHAIN_BIN=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin
+        export DEP_OPTS="ANDROID_SDK=${ANDROID_HOME} ANDROID_NDK=${ANDROID_NDK_HOME} ANDROID_API_LEVEL=${ANDROID_API_LEVEL} ANDROID_TOOLCHAIN_BIN=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+        CONFIG_SHELL= NO_QT=1 make  -C depends HOST="$HOST" "$DEP_OPTS" LOG=1
+        
+    - name: Build Bitbid
+      run: |
+        export WD=$(pwd)
+
+        export HOST=aarch64-linux-android
+
+        ./autogen.sh
+        BITBI_CONFIG_ALL="--enable-suppress-external-warnings --disable-dependency-tracking"
+        BITBI_CONFIG_ALL="${BITBI_CONFIG_ALL} CONFIG_SITE=$WD/depends/$HOST/share/config.site"
+        BITBI_CONFIG="--disable-tests --without-wallet --disable-gui-tests --disable-bench --disable-fuzz-binary --without-utils --without-libs --without-gui --with-daemon"
+        HOST=$HOST ./configure $BITBI_CONFIG_ALL $BITBI_CONFIG --host="$HOST"
+
+        mkdir -p depends/x86_64-pc-linux-gnu/lib
+
+        HOST=$HOST make -j$(nproc) src/bitbid
+        mv src/bitbid android-bitbid-${{ matrix.config.abi }}
+
+    - name: Upload config.log
+      if: failure() # Only run this step if a previous step failed
+      uses: actions/upload-artifact@v2
+      with:
+        name: config.log
+        path: |
+            ./config.log
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: android-bitbid-${{ matrix.config.abi }}
+        path: ./android-bitbid-${{ matrix.config.abi }}
