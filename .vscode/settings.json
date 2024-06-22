@@ -96,6 +96,5 @@
     },
     "files.exclude": {
         ".envbtc": true
-    },
-    "cmake.sourceDirectory": "/Users/james/code/blockchain/bitbi/buji-bitbi/contrib/devtools/bitcoin-tidy"
+    }
 }

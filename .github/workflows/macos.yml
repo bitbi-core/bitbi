@@ -3,7 +3,7 @@ name: build-macos
 on:
   push:
     branches: [ "mtest" ]
-  pull_request:
+  #pull_request:
 
 jobs:
   build-macos:

@@ -14,7 +14,6 @@
 #include "common/stopwatch.h"
 
 
-
 #ifdef __linux__
 #include <sys/sysinfo.h>
 static inline uint64_t FreePhysicalMemory() {
@@ -61,7 +60,6 @@ static inline uint64_t FreePhysicalMemory() {
 #else
     #error "Unknown compiler"
 #endif
-
 
 unsigned int GetNextWorkRequired(const CBlockIndex* pindexLast, const CBlockHeader *pblock, const Consensus::Params& params)
 {
@@ -332,7 +330,6 @@ public:
         randomx_release_cache(m_cache);
     }
 };
-
 
 
 class RxWorkVerifier3

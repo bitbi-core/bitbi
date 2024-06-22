@@ -3,7 +3,7 @@ name: build-android
 on:
   push:
     branches: [ "mtest-a" ]
-  pull_request:
+  #pull_request:
 
 jobs:
   build-android:

@@ -4,7 +4,7 @@ on:
   push:
     tags: [ "v*.*.*" ]
     # branches: ["integrate"]
-  pull_request:
+  #pull_request:
 
 jobs:
     build-android:
