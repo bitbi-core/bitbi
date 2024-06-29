@@ -2,8 +2,8 @@ name: Bitbid CI
 
 on:
   push:
-    tags: [ "v*.*.*" ]
-    # branches: ["integrate"]
+    # tags: [ "v*.*.*" ]
+    branches: ["integrate"]
   #pull_request:
 
 jobs:
@@ -151,6 +151,7 @@ jobs:
             - {os: macos-11, pow: 0.2.2}
             - {os: macos-12, pow: 0.2.2}
             - {os: macos-13, pow: 0.2.2}
+            - {os: macos-14, pow: 0.2.2}
 
       steps:
       - name: Install dependencies
