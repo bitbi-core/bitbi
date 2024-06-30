@@ -202,13 +202,7 @@ private:
 public:
     RxWorkVerifier()
     {
-        randomx_flags flags =  RANDOMX_FLAG_JIT ;
-        if (isAVX2Supported()) {
-            flags |= RANDOMX_FLAG_ARGON2_AVX2;
-        }
-        if (isSSSE3Supported()) {
-            flags |= RANDOMX_FLAG_ARGON2_SSSE3;
-        }
+        randomx_flags flags =  randomx_get_flags();
         mCache = randomx_alloc_cache(flags);
         if (mCache == nullptr)
         {
@@ -246,13 +240,7 @@ private:
 public:
     RxWorkVerifier2()
     {
-        randomx_flags flags =  RANDOMX_FLAG_JIT ;
-        if (isAVX2Supported()) {
-            flags |= RANDOMX_FLAG_ARGON2_AVX2;
-        }
-        if (isSSSE3Supported()) {
-            flags |= RANDOMX_FLAG_ARGON2_SSSE3;
-        }
+        randomx_flags flags =  randomx_get_flags();
         //pre-allocate 2*ncores caches
         const int nCaches = 2*std::thread::hardware_concurrency();
         LogPrintf("RxWorkVerifier2 pre-allocate %d caches\n", nCaches);
@@ -299,7 +287,8 @@ public:
     uint256 m_key;
     randomx_vm *m_vm;
     randomx_cache *m_cache;
-    VerifierCtx(uint256 key):m_vm(nullptr), m_cache(nullptr), m_key(uint256()){
+    randomx_flags mFlags;
+    VerifierCtx(uint256 key):m_vm(nullptr), m_cache(nullptr), m_key(uint256::ZERO), mFlags(randomx_get_flags()){
         reinitialize(key);
     }
     void reinitialize(uint256 key) {
@@ -310,17 +299,10 @@ public:
             if (m_cache) {
                 randomx_release_cache(m_cache);
             }
-            randomx_flags flags =  RANDOMX_FLAG_JIT ;
-            if (isAVX2Supported()) {
-                flags |= RANDOMX_FLAG_ARGON2_AVX2;
-            }
-            if (isSSSE3Supported()) {
-                flags |= RANDOMX_FLAG_ARGON2_SSSE3;
-            }
-            m_cache = randomx_alloc_cache(flags);
+            m_cache = randomx_alloc_cache(mFlags);
             const int WIDTH = 32;
             randomx_init_cache(m_cache, key.data(), WIDTH);
-            m_vm = randomx_create_vm(flags, m_cache, nullptr);
+            m_vm = randomx_create_vm(mFlags, m_cache, nullptr);
             m_key = key;
         }
     }
@@ -328,6 +310,8 @@ public:
     ~VerifierCtx() {
         randomx_destroy_vm(m_vm);
         randomx_release_cache(m_cache);
+        m_vm = nullptr;
+        m_cache = nullptr;
     }
 };
 
@@ -369,7 +353,7 @@ public:
         VerifierCtx *cache = mCacheStack.pop();
         cache->reinitialize(key);
 
-        uint8_t result[WIDTH];
+        uint8_t result[WIDTH] = {0};
         randomx_calculate_hash(cache->m_vm, input, inputSize, result);
 
         mCacheStack.push(cache);

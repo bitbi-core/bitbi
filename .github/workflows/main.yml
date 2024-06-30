@@ -2,8 +2,8 @@ name: Bitbid CI
 
 on:
   push:
-    # tags: [ "v*.*.*" ]
-    branches: ["integrate"]
+    tags: [ "v*.*.*" ]
+    # branches: ["integrate"]
   #pull_request:
 
 jobs:
@@ -181,7 +181,9 @@ jobs:
           mkdir -p depends/lib
           make -j$(sysctl -n hw.logicalcpu) src/bitbid
           chmod +x src/bitbid
+          mkdir -p bitbid-${{ matrix.config.os }}
           mv ./src/bitbid ./bitbid-${{ matrix.config.os }}
+          tar -czf bitbid-${{ matrix.config.os }}.tar.gz bitbid-${{ matrix.config.os }}
       - name: Upload config.log
         if: failure() # Only run this step if a previous step failed
         uses: actions/upload-artifact@v2

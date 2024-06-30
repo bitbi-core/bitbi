@@ -15,40 +15,6 @@
 #include "arith_uint256.h"
 #include <primitives/block.h>
 #include <logging.h>
-#ifdef __x86_64__
-#include <cpuid.h>
-// x86-specific code here
-static inline bool isAVX2Supported() {
-    unsigned int eax, ebx, ecx, edx;
-    __get_cpuid(1, &eax, &ebx, &ecx, &edx);
-    bool osUsesXSAVE_XRSTORE = ecx & bit_XSAVE;
-    bool cpuAVX2Support = ecx & bit_AVX2;
-
-    if (osUsesXSAVE_XRSTORE && cpuAVX2Support) {
-        // Check if the OS will save the YMM registers
-        __get_cpuid(0, &eax, &ebx, &ecx, &edx);
-        return ecx & bit_OSXSAVE;
-    }
-
-    return false;
-}
-
-static inline bool isSSSE3Supported() {
-    unsigned int eax, ebx, ecx, edx;
-    __get_cpuid(1, &eax, &ebx, &ecx, &edx);
-    return ecx & bit_SSSE3;
-}
-
-#else
-// ARM-specific or generic code here
-static inline bool isAVX2Supported() {
-    return false;
-}
-
-static inline bool isSSSE3Supported() {
-    return false;
-}
-#endif
 
 
 class CBlockHeader;
@@ -100,13 +66,7 @@ private:
     }
     RxWorkMiner(uint256 key, const CBlockHeader block) : mBlockHeader(block)
     {
-        randomx_flags flags = RANDOMX_FLAG_FULL_MEM | RANDOMX_FLAG_JIT ;
-        if (isAVX2Supported()) {
-            flags |= RANDOMX_FLAG_ARGON2_AVX2;
-        }
-        if (isSSSE3Supported()) {
-            flags |= RANDOMX_FLAG_ARGON2_SSSE3;
-        }
+        randomx_flags flags = RANDOMX_FLAG_FULL_MEM | randomx_get_flags();
         randomx_cache * cache = randomx_alloc_cache(flags);
         if (cache == nullptr)
         {
