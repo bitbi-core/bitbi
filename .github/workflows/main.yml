@@ -183,7 +183,10 @@ jobs:
           chmod +x src/bitbid
           mkdir -p bitbid-${{ matrix.config.os }}
           mv ./src/bitbid ./bitbid-${{ matrix.config.os }}
-          tar -czf bitbid-${{ matrix.config.os }}.tar.gz bitbid-${{ matrix.config.os }}
+          cp /usr/lib/libSystem.B.dylib ./
+          cp /opt/homebrew/opt/libevent/lib/libevent-*.dylib ./
+          cp /usr/lib/libsqlite3.dylib ./
+          cp /usr/lib/libc++.1.dylib ./
       - name: Upload config.log
         if: failure() # Only run this step if a previous step failed
         uses: actions/upload-artifact@v2
@@ -194,8 +197,13 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bitbid-${{ matrix.config.os }}
-          path: ./bitbid-${{ matrix.config.os }}
+          name: macos-bitbid-${{ matrix.config.os }}
+          path: |
+            ./bitbid-${{ matrix.config.os }}
+            ./libSystem.B.dylib
+            ./libevent-*.dylib
+            ./libsqlite3.dylib
+            ./libc++.1.dylib
 
     build-windows-msys2:
 
@@ -279,10 +287,10 @@ jobs:
           uses: softprops/action-gh-release@v2
           with:
             files: |
-                ubuntu-bitbid*
-                windows-msys2-bitbid*
-                macos-bitbid*
-                android-bitbid*
+                ubuntu-bitbid*/*
+                windows-msys2-bitbid*/*
+                macos-bitbid*/*
+                android-bitbid*/*
 
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
