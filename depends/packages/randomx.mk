@@ -3,7 +3,7 @@ $(package)_version=0.2.2
 $(package)_download_path=https://codeload.github.com/bitbi-core/pow/tar.gz/refs/tags
 $(package)_file_name=v$($(package)_version).tar.gz
 $(package)_download_file=v$($(package)_version)
-$(package)_sha256_hash=f3e0c7165af9fd0474f985537a8f25a3ba0daeb9bed538890fbcba35acb1a370
+$(package)_sha256_hash=01620baa2373db32062bb4333cd74db1fbf93ca9e17717aa03cf693d1277f196
 
 
 define $(package)_preprocess_cmds
