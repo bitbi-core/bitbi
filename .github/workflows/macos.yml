@@ -33,6 +33,7 @@ jobs:
       run: |
         cd depends
         NO_QT=1 NO_BDB=1 NO_WALLET=1 NO_USDT=1 make 
+        cd ..
         ./autogen.sh
         # Capture the output
         full_triplet=$(./depends/config.guess)
