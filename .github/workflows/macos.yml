@@ -8,22 +8,22 @@ on:
 jobs:
   build-macos:
 
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ${{ matrix.config.os }}
 
     strategy:
       matrix:
         config:
-          - {os: macos-11,  pow: 0.2.2}
-          - {os: macos-12, pow: 0.2.2}
-          - {os: macos-13, pow: 0.2.2}
-          - {os: macos-14, pow: 0.2.2}
+          - {os: macos-11 }
+          - {os: macos-12 }
+          - {os: macos-13 }
+          - {os: macos-14 }
 
     steps:
     - name: Install dependencies
       run: |
         echo "begin..."
-        brew install automake libtool boost pkg-config libevent 
+        brew install automake libtool pkg-config 
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
@@ -34,7 +34,16 @@ jobs:
         cd depends
         NO_QT=1 NO_BDB=1 NO_WALLET=1 NO_USDT=1 make 
         ./autogen.sh
-        ./configure --prefix=`pwd`/depends/depends/$(./depends/config.guess) --enable-cxx --enable-static --disable-shared --with-pic --without-wallet --with-gui=no --disable-tests --disable-bench  CXXFLAGS="-O2"
+        # Capture the output
+        full_triplet=$(./depends/config.guess)
+
+        # Use parameter expansion to trim the version number
+        generic_triplet="${full_triplet%%-*}-apple-darwin"
+
+        # Echo the result
+        echo $generic_triplet
+
+        ./configure --prefix=`pwd`/depends/depends/$generic_triplet --enable-cxx --enable-static --disable-shared --with-pic --without-wallet --with-gui=no --disable-tests --disable-bench  CXXFLAGS="-O2"
         mkdir -p depends/lib
         make -j$(sysctl -n hw.logicalcpu) src/bitbid
         chmod +x src/bitbid
