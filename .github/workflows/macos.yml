@@ -43,8 +43,9 @@ jobs:
 
         # Echo the result
         echo $generic_triplet
-
-        ./configure --prefix=`pwd`/depends/depends/$generic_triplet --enable-cxx --enable-static --disable-shared --with-pic --without-wallet --with-gui=no --disable-tests --disable-bench  CXXFLAGS="-O2"
+        echo '===================='
+        ls -l depends
+        ./configure --prefix=`pwd`/depends/$generic_triplet --enable-cxx --enable-static --disable-shared --with-pic --without-wallet --with-gui=no --disable-tests --disable-bench  CXXFLAGS="-O2"
         mkdir -p depends/lib
         make -j$(sysctl -n hw.logicalcpu) src/bitbid
         chmod +x src/bitbid
