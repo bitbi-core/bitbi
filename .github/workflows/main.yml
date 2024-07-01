@@ -7,6 +7,7 @@ on:
   #pull_request:
 
 jobs:
+
     build-android:
 
         timeout-minutes: 15
@@ -183,10 +184,8 @@ jobs:
           chmod +x src/bitbid
           mkdir -p bitbid-${{ matrix.config.os }}
           mv ./src/bitbid ./bitbid-${{ matrix.config.os }}
-          cp /usr/lib/libSystem.B.dylib ./
           cp /opt/homebrew/opt/libevent/lib/libevent-*.dylib ./
-          cp /usr/lib/libsqlite3.dylib ./
-          cp /usr/lib/libc++.1.dylib ./
+          cp /opt/homebrew/opt/sqlite/lib/libsqlite3.dylib ./
       - name: Upload config.log
         if: failure() # Only run this step if a previous step failed
         uses: actions/upload-artifact@v2
@@ -200,10 +199,8 @@ jobs:
           name: macos-bitbid-${{ matrix.config.os }}
           path: |
             ./bitbid-${{ matrix.config.os }}
-            ./libSystem.B.dylib
             ./libevent-*.dylib
             ./libsqlite3.dylib
-            ./libc++.1.dylib
 
     build-windows-msys2:
 
