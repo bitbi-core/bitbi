@@ -7,55 +7,61 @@ on:
 
 jobs:
   build-macos:
-
-    timeout-minutes: 60
+    timeout-minutes: 30
     runs-on: ${{ matrix.config.os }}
-
+    
     strategy:
       matrix:
         config:
-          - {os: macos-11, pow: 0.2.2}
-          # - {os: macos-12, pow: 0.2.2}
-          # - {os: macos-13, pow: 0.2.2}
+          - {os: macos-14, arch: x86_64}
+          - {os: macos-14, arch: arm64}
 
     steps:
     - name: Install dependencies
       run: |
         echo "begin..."
-        brew install automake libtool boost pkg-config libevent 
-        # download latest version of pow
-        POW_URL="https://github.com/bitbi-core/pow/releases/download/v${{matrix.config.pow}}/macos-${{matrix.config.os}}.tar.gz"
-        POW_HOME="$HOME/pow"
-        mkdir -p $POW_HOME
-        curl -L $POW_URL | tar xz -C $POW_HOME
-        ls -l $POW_HOME
+        brew install automake libtool pkg-config
+
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: Build Bitbi-Node
+      env:
+        ARCH: ${{ matrix.config.arch }}
       run: |
-        # export CC=$(brew --prefix llvm)/bin/clang 
-        # export CXX=$(brew --prefix llvm)/bin/clang++
-        # echo "CC=$CC"
-        # echo "CXX=$CXX"
+        # Set the correct host triple
+        HOST="${ARCH}-apple-darwin"
+        echo "Building for ${HOST}"
+
+        cd depends
+        NO_QT=1 NO_BDB=1 NO_WALLET=1 NO_USDT=1 make HOST=${HOST} ARCH=${{ matrix.config.arch }} V=1
+        cd ..
         ./autogen.sh
-        POW_HOME="$HOME/pow"
-        ./configure --enable-cxx --disable-shared --with-pic --without-wallet --with-gui=no --disable-tests --disable-bench CPPFLAGS="-I$POW_HOME/include" LDFLAGS="-L$POW_HOME/lib -lrandomx" CXXFLAGS="-O2"
+        
+        # Use the correct host triple for configuration
+        ./configure --prefix=`pwd`/depends/${HOST} \
+          --enable-cxx --enable-static --disable-shared \
+          --with-pic --without-wallet --with-gui=no \
+          --disable-tests --disable-bench \
+          CXXFLAGS="-O2" \
+          HOST=${HOST}
+        
         mkdir -p depends/lib
-        make -j$(sysctl -n hw.logicalcpu) src/bitbid
+        make V=1 -j$(sysctl -n hw.logicalcpu) src/bitbid
         chmod +x src/bitbid
-        mv ./src/bitbid ./bitbid-${{ matrix.config.os }}
+        mv ./src/bitbid ./bitbid-${{ matrix.config.os }}-${ARCH}
+
     - name: Upload config.log
       if: failure() # Only run this step if a previous step failed
       uses: actions/upload-artifact@v2
       with:
-        name: config.log
+        name: config.log-${{ matrix.config.os }}-${{ matrix.config.arch }}
         path: ./config.log
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: bitbid-${{ matrix.config.os }}
-        path: ./bitbid-${{ matrix.config.os }}
+        name: bitbid-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        path: ./bitbid-${{ matrix.config.os }}-${{ matrix.config.arch }}
