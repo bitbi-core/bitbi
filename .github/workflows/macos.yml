@@ -7,59 +7,66 @@ on:
 
 jobs:
   build-macos:
-
     timeout-minutes: 30
     runs-on: ${{ matrix.config.os }}
-
+    
     strategy:
       matrix:
         config:
-          - {os: macos-11 }
-          - {os: macos-12 }
-          - {os: macos-13 }
-          - {os: macos-14 }
+          - {os: macos-14, arch: x86_64}
+          - {os: macos-14, arch: arm64}
 
     steps:
     - name: Install dependencies
       run: |
         echo "begin..."
-        brew install automake libtool pkg-config 
+        brew install automake libtool pkg-config
+
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: true
 
     - name: Build Bitbi-Node
+      env:
+        ARCH: ${{ matrix.config.arch }}
       run: |
         cd depends
-        NO_QT=1 NO_BDB=1 NO_WALLET=1 NO_USDT=1 make 
+        NO_QT=1 NO_BDB=1 NO_WALLET=1 NO_USDT=1 make HOST=$ARCH-apple-darwin
         cd ..
         ./autogen.sh
+        
         # Capture the output
-        full_triplet=$(./depends/config.guess)
-
+        full_triplet=$($ARCH-apple-darwin)
+        
         # Use parameter expansion to trim the version number
         generic_triplet="${full_triplet%%-*}-apple-darwin"
-
+        
         # Echo the result
         echo $generic_triplet
         echo '===================='
-        # ls -l depends/$generic_triplet;
-        # ls -l depends/$full_triplet;
-        ./configure --prefix=`pwd`/depends/$full_triplet --enable-cxx --enable-static --disable-shared --with-pic --without-wallet --with-gui=no --disable-tests --disable-bench  CXXFLAGS="-O2"
+        
+        ./configure --prefix=`pwd`/depends/$full_triplet \
+          --enable-cxx --enable-static --disable-shared \
+          --with-pic --without-wallet --with-gui=no \
+          --disable-tests --disable-bench \
+          CXXFLAGS="-O2" \
+          HOST=$ARCH-apple-darwin
+        
         mkdir -p depends/lib
         make -j$(sysctl -n hw.logicalcpu) src/bitbid
         chmod +x src/bitbid
-        mv ./src/bitbid ./bitbid-${{ matrix.config.os }}
+        mv ./src/bitbid ./bitbid-${{ matrix.config.os }}-${{ matrix.config.arch }}
+
     - name: Upload config.log
       if: failure() # Only run this step if a previous step failed
       uses: actions/upload-artifact@v2
       with:
-        name: config.log
+        name: config.log-${{ matrix.config.os }}-${{ matrix.config.arch }}
         path: ./config.log
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: bitbid-${{ matrix.config.os }}
-        path: ./bitbid-${{ matrix.config.os }}
+        name: bitbid-${{ matrix.config.os }}-${{ matrix.config.arch }}
+        path: ./bitbid-${{ matrix.config.os }}-${{ matrix.config.arch }}

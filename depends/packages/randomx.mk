@@ -12,7 +12,8 @@ endef
 
 define $(package)_set_vars
         $(package)_config_opts = -DCMAKE_INSTALL_PREFIX=$($(package)_staging_prefix_dir) 
-        $(package)_config_opts_linux = -DARCH=x86_64
+        $(package)_config_opts_linux = -DARCH=$(HOST)
+        $(package)_config_opts_darwin = -DARCH=$(HOST)
         $(package)_config_opts_android = -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake  -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-$(ANDROID_API_LEVEL) 
 endef
 
