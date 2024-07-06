@@ -36,7 +36,7 @@ jobs:
         echo "Building for ${HOST}"
 
         cd depends
-        NO_QT=1 NO_BDB=1 NO_WALLET=1 NO_USDT=1 make HOST=${HOST}
+        NO_QT=1 NO_BDB=1 NO_WALLET=1 NO_USDT=1 make HOST=${HOST} V=1
         cd ..
         ./autogen.sh
         
@@ -49,7 +49,7 @@ jobs:
           HOST=${HOST}
         
         mkdir -p depends/lib
-        make -j$(sysctl -n hw.logicalcpu) src/bitbid
+        make V=1 -j$(sysctl -n hw.logicalcpu) src/bitbid
         chmod +x src/bitbid
         mv ./src/bitbid ./bitbid-${{ matrix.config.os }}-${ARCH}
 
