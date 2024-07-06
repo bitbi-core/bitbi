@@ -12,7 +12,13 @@ endef
 
 define $(package)_set_vars
         $(package)_config_opts = -DCMAKE_INSTALL_PREFIX=$($(package)_staging_prefix_dir) 
-        $(package)_config_opts_linux = -DARCH=x86_64
+        $(package)_config_opts_linux = -DARCH=$(HOST)
+        $(package)_config_opts_darwin = -DCMAKE_OSX_ARCHITECTURES=$(ARCH) -DCMAKE_SYSTEM_NAME=Darwin \
+          -DCMAKE_SYSTEM_PROCESSOR=$(ARCH) \
+          -DCMAKE_OSX_SYSROOT=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk \
+          -DCMAKE_C_FLAGS="-target $(ARCH)-apple-macos11.0" \
+          -DCMAKE_CXX_FLAGS="-target $(ARCH)-apple-macos11.0" \
+          -DCMAKE_EXE_LINKER_FLAGS="-target $(ARCH)-apple-macos11.0"
         $(package)_config_opts_android = -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolchain.cmake  -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-$(ANDROID_API_LEVEL) 
 endef
 
@@ -21,7 +27,7 @@ define $(package)_config_cmds
 endef
 
 define $(package)_build_cmds
-        $(MAKE)
+        $(MAKE) VERBOSE=1
 endef
 
 define $(package)_stage_cmds
