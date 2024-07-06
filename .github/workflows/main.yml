@@ -3,7 +3,7 @@ name: Bitbid CI
 on:
   push:
     tags: [ "v*.*.*" ]
-    # branches: ["int1"]
+    branches: ["integrate"]
   #pull_request:
 
 jobs:
@@ -73,7 +73,7 @@ jobs:
             mkdir -p depends/x86_64-pc-linux-gnu/lib
     
             HOST=$HOST make -j$(nproc) src/bitbid
-            mv src/bitbid bitbid-${{ matrix.config.abi }}
+            mv src/bitbid bitbid-android-${{ matrix.config.abi }}
     
         - name: Upload config.log
           if: failure() # Only run this step if a previous step failed
@@ -86,8 +86,8 @@ jobs:
         - name: Upload artifact
           uses: actions/upload-artifact@v4
           with:
-            name: android-bitbid-${{ matrix.config.abi }}
-            path: ./bitbid-${{ matrix.config.abi }}
+            name: bitbid-android-${{ matrix.config.abi }}
+            path: ./bitbid-android-${{ matrix.config.abi }}
 
     build-ubuntu:
 
@@ -125,7 +125,7 @@ jobs:
             ./configure --without-wallet --with-gui=no --disable-tests --disable-bench CPPFLAGS="-I$POW_HOME/include" LDFLAGS="-L$POW_HOME/lib -lrandomx" CXXFLAGS="-O2"
             mkdir -p depends/x86_64-pc-linux-gnu/lib
             make -j$(nproc) src/bitbid
-            mv ./src/bitbid ./bitbid-${{ matrix.config.os }}
+            mv ./src/bitbid ./bitbid-${{ matrix.config.os }}-x86_64
 
         - name: Upload config.log
           if: failure() # Only run this step if a previous step failed
@@ -138,7 +138,7 @@ jobs:
           uses: actions/upload-artifact@v4
           with:
             name: ubuntu-bitbid-${{ matrix.config.os }}
-            path: ./bitbid-${{ matrix.config.os }}
+            path: ./bitbid-${{ matrix.config.os }}-x86_64
                 
 
     build-macos:
@@ -187,7 +187,7 @@ jobs:
           mkdir -p depends/lib
           make V=1 -j$(sysctl -n hw.logicalcpu) src/bitbid
           chmod +x src/bitbid
-          mv ./src/bitbid ./bitbid-${{ matrix.config.os }}-${ARCH}
+          mv ./src/bitbid ./bitbid-macos-${{ matrix.config.arch }}
 
       - name: Upload config.log
         if: failure() # Only run this step if a previous step failed
@@ -199,8 +199,8 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bitbid-${{ matrix.config.os }}-${{ matrix.config.arch }}
-          path: ./bitbid-${{ matrix.config.os }}-${{ matrix.config.arch }}
+          name: bitbid-macos-${{ matrix.config.arch }}
+          path: ./bitbid-macos-${{ matrix.config.arch }}
 
     build-windows-msys2:
 
@@ -255,7 +255,7 @@ jobs:
                 ./configure CXXFLAGS="-I/mingw64/include -I/mingw64/include/c++/13.2.0 -I/mingw64/x86_64-w64-mingw32/include -I$POW_HOME/include" LDFLAGS="-L$POW_HOME/lib -L/mingw64/lib -lsodium -lrandomx" --prefix=/ --with-gui=no --with-wallet=no --disable-tests --disable-bench --disable-zmq
                 mkdir -p depends/x86_64-pc-msys/lib
                 make -j$(nproc) ./src/bitbid.exe
-                mv ./src/bitbid.exe bitbid-${{ matrix.config.c }}.exe
+                mv ./src/bitbid.exe bitbid-x86_64.exe
 
           - name: Upload config.log
             if: failure() # Only run this step if a previous step failed
@@ -267,8 +267,8 @@ jobs:
           - name: Upload artifact
             uses: actions/upload-artifact@v4
             with:
-                name: windows-msys2-bitbid-${{ matrix.config.c }}
-                path: ./bitbid-${{ matrix.config.c }}.exe
+                name: windows-msys2-bitbid-x86_64
+                path: ./bitbid-x86_64.exe
 
     create-release:
         needs: [build-ubuntu, build-windows-msys2, build-macos, build-android]
@@ -289,8 +289,8 @@ jobs:
             files: |
                 ubuntu-bitbid*/*
                 windows-msys2-bitbid*/*
-                macos-bitbid*/*
-                android-bitbid*/*
+                bitbid-macos-*/*
+                bitbid-android*/*
 
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
