@@ -3,7 +3,7 @@ name: Bitbid CI
 on:
   push:
     tags: [ "v*.*.*" ]
-    branches: ["int1"]
+    # branches: ["int1"]
   #pull_request:
 
 jobs:
