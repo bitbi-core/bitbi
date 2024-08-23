@@ -70,6 +70,7 @@
 #include <string>
 #include <tuple>
 #include <utility>
+#include <random>
 
 using kernel::CCoinsStats;
 using kernel::CoinStatsHashType;
@@ -90,6 +91,9 @@ static constexpr std::chrono::hours DATABASE_WRITE_INTERVAL{1};
 static constexpr std::chrono::hours DATABASE_FLUSH_INTERVAL{24};
 /** Maximum age of our tip for us to be considered current for fee estimation */
 static constexpr std::chrono::hours MAX_FEE_ESTIMATION_TIP_AGE{3};
+
+static constexpr int POW_CHANCE_IN_IBD{1000};
+
 const std::vector<std::string> CHECKLEVEL_DOC {
     "level 0 reads the blocks from disk",
     "level 1 verifies block validity",
@@ -108,6 +112,16 @@ static constexpr int PRUNE_LOCK_BUFFER{10};
 GlobalMutex g_best_block_mutex;
 std::condition_variable g_best_block_cv;
 uint256 g_best_block;
+
+static bool CheckBlockLight(const ChainstateManager& chain_man, const CBlock& block, BlockValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW=true, bool fCheckMerkleRoot=true);
+
+// Function to determine if a given chance occurs
+bool Chance(int chance) {
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(1, chance);
+    return dis(gen) == 1;
+}
 
 const CBlockIndex* Chainstate::FindForkInGlobalIndex(const CBlockLocator& locator) const
 {
@@ -1734,6 +1748,11 @@ bool ChainstateManager::IsInitialBlockDownload() const
     }
     LogPrintf("Leaving InitialBlockDownload (latching to false)\n");
     m_cached_finished_ibd.store(true, std::memory_order_relaxed);
+    if (m_best_header && !CheckProofOfWorkX(m_best_header->GetBlockHeader(), GetParams().GetConsensus())) {
+         throw std::runtime_error(strprintf("ChainstateManager::IsInitialBlockDownload: best header %d has invalid proof of work",
+                                            m_best_header->nHeight));
+    }
+
     return false;
 }
 
@@ -2133,6 +2152,16 @@ static unsigned int GetBlockScriptFlags(const CBlockIndex& block_index, const Ch
     return flags;
 }
 
+static bool CheckBlockLight(const ChainstateManager& chain_man, const CBlock& block, BlockValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW, bool fCheckMerkleRoot)
+{
+    if (fCheckPOW && chain_man.IsInitialBlockDownload()) {
+        fCheckPOW = Chance(POW_CHANCE_IN_IBD);
+        if (fCheckPOW) {
+            LogPrintf("CheckBlockLight: bingo POW check in IBD\n");
+        }
+    }
+    return CheckBlock(block, state, consensusParams, fCheckPOW, fCheckMerkleRoot);
+}
 
 static SteadyClock::duration time_check{};
 static SteadyClock::duration time_forks{};
@@ -2172,7 +2201,7 @@ bool Chainstate::ConnectBlock(const CBlock& block, BlockValidationState& state, 
     // is enforced in ContextualCheckBlockHeader(); we wouldn't want to
     // re-enforce that rule here (at least until we make it impossible for
     // m_adjusted_time_callback() to go backward).
-    if (!CheckBlock(block, state, params.GetConsensus(), !fJustCheck, !fJustCheck)) {
+    if (!CheckBlockLight(m_chainman, block, state, params.GetConsensus(), !fJustCheck, !fJustCheck)) {
         if (state.GetResult() == BlockValidationResult::BLOCK_MUTATED) {
             // We don't write down blocks to disk if they may have been
             // corrupted, so this should be impossible unless we're having hardware
@@ -3622,6 +3651,18 @@ static bool CheckBlockHeader(const CBlockHeader& block, BlockValidationState& st
     return true;
 }
 
+bool ChainstateManager::CheckBlockHeaderLight(const CBlockHeader& block, BlockValidationState& state, const Consensus::Params& consensusParams, bool fCheckPOW = true)
+{
+    // don't need to check when we are in IBD, just check the tips after IBD
+    if (fCheckPOW && IsInitialBlockDownload()) {
+        fCheckPOW = Chance(POW_CHANCE_IN_IBD);
+        if (fCheckPOW) {
+            LogPrintf("CheckBlockHeaderLight: bingo POW check in IBD\n");
+        }
+    }
+    return CheckBlockHeader(block, state, consensusParams, fCheckPOW);
+}
+
 static bool CheckMerkleRoot(const CBlock& block, BlockValidationState& state)
 {
     if (block.m_checked_merkle_root) return true;
@@ -3817,7 +3858,7 @@ bool HasValidProofOfWork(const std::vector<CBlockHeader>& headers, const Consens
         return CheckProofOfWorkX(headers.front(), consensusParams);
     }
     return CheckProofOfWorkX(headers.front(), consensusParams) && CheckProofOfWorkX(headers.back(), consensusParams);
-    
+
     // return std::all_of(headers.cbegin(), headers.cend(),
     //         [&](const auto& header) { return CheckProofOfWorkX(header, consensusParams);});
 }
@@ -3998,7 +4039,7 @@ bool ChainstateManager::AcceptBlockHeader(const CBlockHeader& block, BlockValida
             return true;
         }
 
-        if (!CheckBlockHeader(block, state, GetConsensus())) {
+        if (!CheckBlockHeaderLight(block, state, GetConsensus())) {
             LogPrint(BCLog::VALIDATION, "%s: Consensus::CheckBlockHeader: %s, %s\n", __func__, hash.ToString(), state.ToString());
             return false;
         }
@@ -4195,7 +4236,7 @@ bool ChainstateManager::AcceptBlock(const std::shared_ptr<const CBlock>& pblock,
 
     const CChainParams& params{GetParams()};
 
-    if (!CheckBlock(block, state, params.GetConsensus()) ||
+    if (!CheckBlockLight(*this, block, state, params.GetConsensus()) ||
         !ContextualCheckBlock(block, state, *this, pindex->pprev)) {
         if (state.IsInvalid() && state.GetResult() != BlockValidationResult::BLOCK_MUTATED) {
             pindex->nStatus |= BLOCK_FAILED_VALID;
@@ -4316,7 +4357,7 @@ bool TestBlockValidity(BlockValidationState& state,
     // NOTE: CheckBlockHeader is called by CheckBlock
     if (!ContextualCheckBlockHeader(block, state, chainstate.m_blockman, chainstate.m_chainman, pindexPrev, adjusted_time_callback()))
         return error("%s: Consensus::ContextualCheckBlockHeader: %s", __func__, state.ToString());
-    if (!CheckBlock(block, state, chainparams.GetConsensus(), fCheckPOW, fCheckMerkleRoot))
+    if (!CheckBlockLight(chainstate.m_chainman, block, state, chainparams.GetConsensus(), fCheckPOW, fCheckMerkleRoot))
         return error("%s: Consensus::CheckBlock: %s", __func__, state.ToString());
     if (!ContextualCheckBlock(block, state, chainstate.m_chainman, pindexPrev))
         return error("%s: Consensus::ContextualCheckBlock: %s", __func__, state.ToString());

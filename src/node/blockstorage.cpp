@@ -29,7 +29,7 @@
 
 #include <map>
 #include <unordered_map>
-#include <future> 
+#include <future>
 
 namespace kernel {
 static constexpr uint8_t DB_BLOCK_FILES{'f'};
@@ -129,7 +129,7 @@ bool BlockTreeDB::LoadBlockIndexGuts(const Consensus::Params& consensusParams, s
                 pindexNew->nNonce         = diskindex.nNonce;
                 pindexNew->nStatus        = diskindex.nStatus;
                 pindexNew->nTx            = diskindex.nTx;
-                // we check the proof of work later, thus we have no need to check every block here, as 
+                // we check the proof of work later, thus we have no need to check every block here, as
                 // we can only check the continuous of the chain and pow of the first and last block in the chain
                 // if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, consensusParams)) {
                 //     return error("%s: CheckProofOfWork failed: %s", __func__, pindexNew->ToString());
@@ -465,7 +465,7 @@ bool BlockManager::LoadBlockIndex(const std::optional<uint256>& snapshot_blockha
     }
 
 
-    //check the continuous of the chain 
+    //check the continuous of the chain
     uint256 hashLastBlock;
     for (CBlockIndex* pindex : vSortedByHeight) {
         if (!hashLastBlock.IsNull()) {
@@ -487,7 +487,7 @@ bool BlockManager::LoadBlockIndex(const std::optional<uint256>& snapshot_blockha
         return CheckProofOfWorkX(vSortedByHeight.front()->GetBlockHeader(), consensusParams);
     }
     return CheckProofOfWorkX(vSortedByHeight.front()->GetBlockHeader(), consensusParams) && CheckProofOfWorkX(vSortedByHeight.back()->GetBlockHeader(), consensusParams);
-    
+
     // return true;
 }
 
@@ -1229,6 +1229,11 @@ void ImportBlocks(ChainstateManager& chainman, std::vector<fs::path> vImportFile
             if (!chainstate->ActivateBestChain(state, nullptr)) {
                 chainman.GetNotifications().fatalError(strprintf("Failed to connect best block (%s)", state.ToString()));
                 return;
+            }
+            CBlockIndex* pindex = chainstate->m_chain.Tip();
+            if (pindex != nullptr && !CheckProofOfWorkX(pindex->GetBlockHeader(), chainman.GetParams().GetConsensus())) {
+                throw std::runtime_error(strprintf("ImportBlocks: best header %d has invalid proof of work",
+                                                    pindex->nHeight));
             }
         }
     } // End scope of ImportingNow
