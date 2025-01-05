@@ -77,7 +77,7 @@ jobs:
     
         - name: Upload config.log
           if: failure() # Only run this step if a previous step failed
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v4
           with:
             name: config.log
             path: |
@@ -135,12 +135,10 @@ jobs:
             cp ./bitbid-ubuntu-x86_64 bitbid-package/
             # Copy the required shared library
             cp /usr/lib/x86_64-linux-gnu/libevent_pthreads-2.1.so.7 bitbid-package/
-            # Create tar.gz archive
-            tar -czf bitbid-ubuntu-x86_64.tar.gz -C bitbid-package .
 
         - name: Upload config.log
           if: failure()
-          uses: actions/upload-artifact@v2
+          uses: actions/upload-artifact@v4
           with:
             name: config.log
             path: ./config.log
@@ -149,7 +147,7 @@ jobs:
           uses: actions/upload-artifact@v4
           with:
             name: ubuntu-bitbid-${{ matrix.config.os }}
-            path: ./bitbid-ubuntu-x86_64.tar.gz
+            path: ./bitbid-package/*
                 
 
     build-macos:
@@ -202,7 +200,7 @@ jobs:
 
       - name: Upload config.log
         if: failure() # Only run this step if a previous step failed
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: config.log
           path: ./config.log
@@ -270,7 +268,7 @@ jobs:
 
           - name: Upload config.log
             if: failure() # Only run this step if a previous step failed
-            uses: actions/upload-artifact@v2
+            uses: actions/upload-artifact@v4
             with:
                 name: config.log
                 path: ./config.log
