@@ -109,7 +109,7 @@ jobs:
             sudo apt-get -y install libsqlite3-dev libminiupnpc-dev libnatpmp-dev \
             build-essential libtool autotools-dev automake pkg-config bsdmainutils \
             python3 libevent-dev libboost-dev \
-            libboost-all-dev libevent-static
+            libboost-all-dev
             # download latest version of pow
             POW_URL="https://github.com/bitbi-core/pow/releases/download/v${{matrix.config.pow}}/ubuntu-${{matrix.config.os}}.tar.gz"
             POW_HOME="$HOME/pow"
@@ -130,7 +130,8 @@ jobs:
             CPPFLAGS="-I$POW_HOME/include" \
             LDFLAGS="-L$POW_HOME/lib -lrandomx -static-libstdc++ -static-libgcc" \
             CXXFLAGS="-O2" \
-            --enable-static --disable-shared
+            --enable-static --disable-shared \
+            LIBS="-static -levent -lrt -lpthread"
             mkdir -p depends/x86_64-pc-linux-gnu/lib
             make -j$(nproc) src/bitbid src/bitbi-cli
             mv ./src/bitbid ./bitbid-ubuntu-x86_64
@@ -141,7 +142,6 @@ jobs:
             mkdir -p bitbid-package
             cp ./bitbid-ubuntu-x86_64 bitbid-package/
             cp ./bitbi-cli-ubuntu-x86_64 bitbid-package/
-            cp /usr/lib/x86_64-linux-gnu/libevent_pthreads-2.1.so.7 bitbid-package/
             tar -czf bitbid-ubuntu-${{ matrix.config.os }}.tar.gz -C bitbid-package .
 
         - name: Upload config.log
@@ -199,7 +199,6 @@ jobs:
             --with-pic --without-wallet --with-gui=no \
             --disable-tests --disable-bench \
             CXXFLAGS="-O2" \
-            LDFLAGS="-static" \
             HOST=${HOST}
           
           mkdir -p depends/lib
