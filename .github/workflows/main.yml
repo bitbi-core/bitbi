@@ -108,7 +108,8 @@ jobs:
             echo "begin..."
             sudo apt-get -y install libsqlite3-dev libminiupnpc-dev libnatpmp-dev \
             build-essential libtool autotools-dev automake pkg-config bsdmainutils \
-            python3 libevent-dev libboost-dev
+            python3 libevent-dev libboost-dev \
+            libboost-all-dev libevent-static
             # download latest version of pow
             POW_URL="https://github.com/bitbi-core/pow/releases/download/v${{matrix.config.pow}}/ubuntu-${{matrix.config.os}}.tar.gz"
             POW_HOME="$HOME/pow"
@@ -125,7 +126,11 @@ jobs:
           run: |
             ./autogen.sh
             POW_HOME="$HOME/pow"
-            ./configure --without-wallet --with-gui=no --disable-tests --disable-bench CPPFLAGS="-I$POW_HOME/include" LDFLAGS="-L$POW_HOME/lib -lrandomx" CXXFLAGS="-O2"
+            ./configure --without-wallet --with-gui=no --disable-tests --disable-bench \
+            CPPFLAGS="-I$POW_HOME/include" \
+            LDFLAGS="-L$POW_HOME/lib -lrandomx -static-libstdc++ -static-libgcc" \
+            CXXFLAGS="-O2" \
+            --enable-static --disable-shared
             mkdir -p depends/x86_64-pc-linux-gnu/lib
             make -j$(nproc) src/bitbid src/bitbi-cli
             mv ./src/bitbid ./bitbid-ubuntu-x86_64
@@ -194,6 +199,7 @@ jobs:
             --with-pic --without-wallet --with-gui=no \
             --disable-tests --disable-bench \
             CXXFLAGS="-O2" \
+            LDFLAGS="-static" \
             HOST=${HOST}
           
           mkdir -p depends/lib
@@ -267,7 +273,10 @@ jobs:
                 export CPLUS_INCLUDE_PATH=/mingw64/include:$CPLUS_INCLUDE_PATH
                 ./autogen.sh
                 POW_HOME="$HOME/pow"
-                ./configure CXXFLAGS="-I/mingw64/include -I/mingw64/include/c++/13.2.0 -I/mingw64/x86_64-w64-mingw32/include -I$POW_HOME/include" LDFLAGS="-L$POW_HOME/lib -L/mingw64/lib -lsodium -lrandomx" --prefix=/ --with-gui=no --with-wallet=no --disable-tests --disable-bench --disable-zmq
+                ./configure CXXFLAGS="-I/mingw64/include -I/mingw64/include/c++/13.2.0 -I/mingw64/x86_64-w64-mingw32/include -I$POW_HOME/include" \
+                LDFLAGS="-L$POW_HOME/lib -L/mingw64/lib -lsodium -lrandomx -static" \
+                --prefix=/ --with-gui=no --with-wallet=no --disable-tests --disable-bench --disable-zmq \
+                --enable-static --disable-shared
                 mkdir -p depends/x86_64-pc-msys/lib
                 make -j$(nproc) ./src/bitbid.exe ./src/bitbi-cli.exe
                 mv ./src/bitbid.exe bitbid-windows-x86_64.exe
