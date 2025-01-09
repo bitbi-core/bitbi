@@ -72,8 +72,9 @@ jobs:
     
             mkdir -p depends/x86_64-pc-linux-gnu/lib
     
-            HOST=$HOST make -j$(nproc) src/bitbid
+            HOST=$HOST make -j$(nproc) src/bitbid src/bitbi-cli
             mv src/bitbid bitbid-android-${{ matrix.config.abi }}
+            mv src/bitbi-cli bitbi-cli-android-${{ matrix.config.abi }}
     
         - name: Upload config.log
           if: failure() # Only run this step if a previous step failed
@@ -87,7 +88,9 @@ jobs:
           uses: actions/upload-artifact@v4
           with:
             name: bitbid-android-${{ matrix.config.abi }}
-            path: ./bitbid-android-${{ matrix.config.abi }}
+            path: |
+              ./bitbid-android-${{ matrix.config.abi }}
+              ./bitbi-cli-android-${{ matrix.config.abi }}
 
     build-ubuntu:
 
@@ -124,17 +127,17 @@ jobs:
             POW_HOME="$HOME/pow"
             ./configure --without-wallet --with-gui=no --disable-tests --disable-bench CPPFLAGS="-I$POW_HOME/include" LDFLAGS="-L$POW_HOME/lib -lrandomx" CXXFLAGS="-O2"
             mkdir -p depends/x86_64-pc-linux-gnu/lib
-            make -j$(nproc) src/bitbid
+            make -j$(nproc) src/bitbid src/bitbi-cli
             mv ./src/bitbid ./bitbid-ubuntu-x86_64
+            mv ./src/bitbi-cli ./bitbi-cli-ubuntu-x86_64
 
         - name: Package binary and dependencies
           run: |
-            # Create a directory for the package
             mkdir -p bitbid-package
-            # Copy the binary
             cp ./bitbid-ubuntu-x86_64 bitbid-package/
-            # Copy the required shared library
+            cp ./bitbi-cli-ubuntu-x86_64 bitbid-package/
             cp /usr/lib/x86_64-linux-gnu/libevent_pthreads-2.1.so.7 bitbid-package/
+            tar -czf bitbid-ubuntu-${{ matrix.config.os }}.tar.gz -C bitbid-package .
 
         - name: Upload config.log
           if: failure()
@@ -147,7 +150,7 @@ jobs:
           uses: actions/upload-artifact@v4
           with:
             name: ubuntu-bitbid-${{ matrix.config.os }}
-            path: ./bitbid-package/*
+            path: ./bitbid-ubuntu-${{ matrix.config.os }}.tar.gz
                 
 
     build-macos:
@@ -194,9 +197,10 @@ jobs:
             HOST=${HOST}
           
           mkdir -p depends/lib
-          make V=1 -j$(sysctl -n hw.logicalcpu) src/bitbid
-          chmod +x src/bitbid
+          make V=1 -j$(sysctl -n hw.logicalcpu) src/bitbid src/bitbi-cli
+          chmod +x src/bitbid src/bitbi-cli
           mv ./src/bitbid ./bitbid-macos-${{ matrix.config.arch }}
+          mv ./src/bitbi-cli ./bitbi-cli-macos-${{ matrix.config.arch }}
 
       - name: Upload config.log
         if: failure() # Only run this step if a previous step failed
@@ -209,7 +213,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bitbid-macos-${{ matrix.config.arch }}
-          path: ./bitbid-macos-${{ matrix.config.arch }}
+          path: |
+            ./bitbid-macos-${{ matrix.config.arch }}
+            ./bitbi-cli-macos-${{ matrix.config.arch }}
 
     build-windows-msys2:
 
@@ -263,8 +269,9 @@ jobs:
                 POW_HOME="$HOME/pow"
                 ./configure CXXFLAGS="-I/mingw64/include -I/mingw64/include/c++/13.2.0 -I/mingw64/x86_64-w64-mingw32/include -I$POW_HOME/include" LDFLAGS="-L$POW_HOME/lib -L/mingw64/lib -lsodium -lrandomx" --prefix=/ --with-gui=no --with-wallet=no --disable-tests --disable-bench --disable-zmq
                 mkdir -p depends/x86_64-pc-msys/lib
-                make -j$(nproc) ./src/bitbid.exe
+                make -j$(nproc) ./src/bitbid.exe ./src/bitbi-cli.exe
                 mv ./src/bitbid.exe bitbid-windows-x86_64.exe
+                mv ./src/bitbi-cli.exe bitbi-cli-windows-x86_64.exe
 
           - name: Upload config.log
             if: failure() # Only run this step if a previous step failed
@@ -277,7 +284,9 @@ jobs:
             uses: actions/upload-artifact@v4
             with:
                 name: windows-msys2-bitbid-x86_64
-                path: ./bitbid-windows-x86_64.exe
+                path: |
+                  ./bitbid-windows-x86_64.exe
+                  ./bitbi-cli-windows-x86_64.exe
 
     create-release:
         needs: [build-ubuntu, build-windows-msys2, build-macos, build-android]
@@ -296,10 +305,10 @@ jobs:
           uses: softprops/action-gh-release@v2
           with:
             files: |
-                ubuntu-bitbid*/*.tar.gz
-                windows-msys2-bitbid*/*
+                ubuntu-bitbid-*/*.tar.gz
+                windows-msys2-bitbid-*/*
                 bitbid-macos-*/*
-                bitbid-android*/*
+                bitbid-android-*/*
 
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
