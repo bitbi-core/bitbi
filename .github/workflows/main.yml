@@ -318,14 +318,49 @@ jobs:
         - name: Display structure of downloaded files
           run: ls -R
 
+        - name: Create platform-specific zip files
+          run: |
+            # Create directories for each platform
+            mkdir -p release/{windows,ubuntu,macos-x86_64,macos-arm64,android}
+            
+            # Package Windows binaries
+            cp windows-msys2-bitbid-x86_64/* release/windows/
+            cd release/windows
+            zip -r ../bitbi-windows-x86_64.zip *
+            cd ../..
+            
+            # Package Ubuntu binaries
+            tar xzf ubuntu-bitbid-*/bitbid-ubuntu-ubuntu-22.04.tar.gz -C release/ubuntu/
+            cd release/ubuntu
+            zip -r ../bitbi-ubuntu-x86_64.zip *
+            cd ../..
+            
+            # Package macOS x86_64 binaries
+            cp bitbid-macos-x86_64/* release/macos-x86_64/
+            cd release/macos-x86_64
+            zip -r ../bitbi-macos-x86_64.zip *
+            cd ../..
+            
+            # Package macOS arm64 binaries
+            cp bitbid-macos-arm64/* release/macos-arm64/
+            cd release/macos-arm64
+            zip -r ../bitbi-macos-arm64.zip *
+            cd ../..
+            
+            # Package Android binaries
+            cp bitbid-android-arm64-v8a/* release/android/
+            cd release/android
+            zip -r ../bitbi-android-arm64-v8a.zip *
+            cd ../..
+
         - name: Upload Release Assets
           uses: softprops/action-gh-release@v2
           with:
             files: |
-                ubuntu-bitbid-*/*.tar.gz
-                windows-msys2-bitbid-*/*
-                bitbid-macos-*/*
-                bitbid-android-*/*
-
+              release/bitbi-windows-x86_64.zip
+              release/bitbi-ubuntu-x86_64.zip
+              release/bitbi-macos-x86_64.zip
+              release/bitbi-macos-arm64.zip
+              release/bitbi-android-arm64-v8a.zip
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
